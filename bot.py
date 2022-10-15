@@ -37,7 +37,7 @@ async def bind(ctx, htb_id: str):
             return
     # if id is already set
     if discord_id in dict:
-        await ctx.send(f"Your discord id is already bound to HTB id {dict[discord_id]}")
+        await ctx.send(f"Your discord id is already bound to HTB id {discord_id}")
         return
     # if id is not set
     else:
@@ -82,6 +82,7 @@ async def init(ctx):
 
 @tasks.loop(minutes=3)
 async def check_for_new_flags():
+    print("check_for_new_flags()")
     global dict
     global channel
     update_active_machines()
@@ -108,8 +109,10 @@ async def check_for_new_flags():
                     for user in dict:
                         # if user flagged
                         if htb_id == dict[user]["htb_id"]:
+                            print(f"htb_id {htb_id} flagged {type} machine {m_id}")
                             # if flag has not been accounted for
                             if m_id not in dict[user]["f_"+type]:
+                                print("flag not accounted for")
                                 dict[user]["f_"+type].append(m_id)
                                 # send alert
                                 description = f"  |  `{u_name}` pawned **{m_name}**\n"\
