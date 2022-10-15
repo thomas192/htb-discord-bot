@@ -93,6 +93,7 @@ async def check_for_new_flags():
     machine_list = get_active_machines()
     # iterate over active machines
     for m in machine_list:
+        print(f"[*] checking machine activity {m[0]}")
         filename = "machines_activity_" + m[0] + ".json"
         m_id = m[0]
         m_name = m[1]

@@ -29,7 +29,7 @@ def get_login_token() -> str:
 # Dump data from an HTB endpoint and return name for the output file
 def dump_htb_endpoint(token: str, endpoint: str, out_file_name: str):
     print("dump_htb_endpoint()")
-    print(f"endpoint: endpoint")
+    print(f"[*] dumping endpoint: {endpoint}")
     headers = {"User-Agent": USER_AGENT, "Accept": "application/json", "Authorization": f"Bearer {token}"}
     url = f"https://www.hackthebox.eu/api/v4/{endpoint}"
 
@@ -68,6 +68,7 @@ def update_machines_activity():
     machine_list = get_active_machines()
     # Update activity for each machine
     for m in machine_list:
+        print(f"[*] updating machine {m} activity")
         endpoint = "machine/activity/" + m[0]
         out_file_name = "machines_activity_" + m[0]
         dump_htb_endpoint(TOKEN, endpoint, out_file_name)
