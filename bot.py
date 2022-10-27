@@ -92,7 +92,7 @@ async def init(ctx):
         await channel.send("I cannot be initialised more than once")
 
 
-@tasks.loop(minutes=3)
+@tasks.loop(minutes=5)
 async def check_for_new_flags():
     print("check_for_new_flags()")
     print(datetime.now())

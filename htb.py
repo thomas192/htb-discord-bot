@@ -37,6 +37,10 @@ def get_login_token() -> str:
     return token
 
 
+# TOKEN = get_login_token()
+TOKEN = os.getenv("HTB_TOKEN")
+
+
 # Dumps data from machines HTB endpoint
 def dump_htb_endpoint(token: str, endpoint: str, out_file_name: str):
     print("dump_htb_endpoint()")
@@ -50,9 +54,6 @@ def dump_htb_endpoint(token: str, endpoint: str, out_file_name: str):
 
     with open(f"{out_file_name}.json", "w") as f:
         json.dump(data, f)
-
-
-TOKEN = get_login_token()
 
 
 # Updates file that stores active machines
