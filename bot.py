@@ -49,7 +49,7 @@ async def bind(ctx, htb_id: str):
             return
     # if id is already set
     if discord_id in dict:
-        await ctx.send(f"Your discord id is already bound to HTB id {discord_id}")
+        await ctx.send(f"You are already bound")
         return
     # if id is not set
     else:
@@ -87,12 +87,12 @@ async def init(ctx):
         channel = discord.utils.get(ctx.guild.channels, name="pwned")
         check_for_new_flags.start()
         init_cpt += 1
-        await channel.send("Initialisation done")
+        await channel.send("Initialization done")
     else:
-        await channel.send("I cannot be initialised more than once")
+        await channel.send("I cannot be initialized more than once")
 
 
-@tasks.loop(minutes=5)
+@tasks.loop(minutes=10)
 async def check_for_new_flags():
     print("check_for_new_flags()")
     print(datetime.now())

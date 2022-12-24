@@ -2,7 +2,6 @@ import asyncio
 import functools
 import json
 import typing
-
 import requests
 import os
 from dotenv import load_dotenv
