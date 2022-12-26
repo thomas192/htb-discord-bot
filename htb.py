@@ -1,22 +1,12 @@
-import asyncio
-import functools
-import json
-import typing
 import requests
 import os
 from dotenv import load_dotenv
+from utils import load_from_json, write_to_json
 
 BASE_URL = "https://www.hackthebox.eu/api/v4"
 USER_AGENT = "curl/7.68.0"
 
 load_dotenv()
-
-
-def to_thread(func: typing.Callable) -> typing.Coroutine:
-    @functools.wraps(func)
-    async def wrapper(*args, **kwargs):
-        return await asyncio.to_thread(func, *args, **kwargs)
-    return wrapper
 
 
 # Login to HTB and return a token string
@@ -36,7 +26,6 @@ def get_login_token() -> str:
     return token
 
 
-# TOKEN = get_login_token()
 TOKEN = os.getenv("HTB_TOKEN")
 
 
@@ -51,12 +40,10 @@ def dump_htb_endpoint(token: str, endpoint: str, out_file_name: str):
     data = r.json()
     data = data["info"]
 
-    with open(f"{out_file_name}.json", "w") as f:
-        json.dump(data, f)
+    write_to_json(f"{out_file_name}.json", data)
 
 
-# Updates file that stores active machines
-@to_thread
+# Updates active machines
 def update_active_machines():
     print("update_active_machines()")
     dump_htb_endpoint(TOKEN, "machine/list", out_file_name="machines_active")
@@ -66,16 +53,14 @@ def update_active_machines():
 # [[id, name, difficulty], ...]
 def get_active_machines():
     print("get_active_machines()")
+    active_machines = load_from_json("machines_active.json")
     machine_list = []
-    with open("machines_active.json") as f:
-        active_machines = json.load(f)
-        for m in active_machines:
-            machine_list.append([str(m["id"]), m["name"], m["difficultyText"]])
+    for m in active_machines:
+        machine_list.append([str(m["id"]), m["name"], m["difficultyText"]])
     return machine_list
 
 
 # Updates files that store machines activity
-@to_thread
 def update_machines_activity():
     print("update_machines_activity()")
     machine_list = get_active_machines()

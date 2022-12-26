@@ -1,11 +1,12 @@
+import asyncio
 import os
-import json
 import discord
 from datetime import datetime
 from discord.ext import commands
 from discord.ext import tasks
 from dotenv import load_dotenv
 from htb import update_active_machines, update_machines_activity, get_active_machines
+from utils import load_from_json, write_to_json
 
 load_dotenv()
 TOKEN = os.getenv('DISCORD_TOKEN')
@@ -37,11 +38,8 @@ async def on_ready():
 
 @bot.command(name="bind")
 async def bind(ctx, htb_id: str):
-    global dict
     discord_id = str(ctx.author.id)
-    # load dict from file
-    with open("dict.json", "r") as f:
-        dict = json.load(f)
+    dict = load_from_json("dict.json")
     # check if htb_id is not already set for another user
     for user in dict:
         if htb_id == dict[user]["htb_id"]:
@@ -55,18 +53,14 @@ async def bind(ctx, htb_id: str):
     else:
         dict[discord_id] = {"htb_id": htb_id, "avatar_url": ctx.message.author.avatar.url, "f_user": [], "f_root": []}
         await ctx.send(f"Your discord id is now bound to HTB id {htb_id}")
-    # update dict
-    with open("dict.json", "w") as f:
-        json.dump(dict, f)
+
+    write_to_json("dict.json", dict)
 
 
 @bot.command(name="purge")
 async def purge(ctx):
-    global dict
     discord_id = str(ctx.author.id)
-    # load dict from file
-    with open("dict.json", "r") as f:
-        dict = json.load(f)
+    dict = load_from_json("dict.json")
     if discord_id in dict:  # if id is already set
         purged_id = dict[discord_id]["htb_id"]
         dict.pop(discord_id)  # remove entry
@@ -74,9 +68,8 @@ async def purge(ctx):
     else:  # if id is not set
         await ctx.send("Your discord id is not bound to any HTB id")
         return
-    # update dict
-    with open("dict.json", "w") as f:
-        json.dump(dict, f)
+
+    write_to_json("dict.json", dict)
 
 
 @bot.command(name="init")
@@ -92,53 +85,46 @@ async def init(ctx):
         await channel.send("I cannot be initialized more than once")
 
 
-@tasks.loop(minutes=10)
+@tasks.loop(minutes=1)
 async def check_for_new_flags():
-    print("check_for_new_flags()")
-    print(datetime.now())
-    global dict
+    print(f"check_for_new_flags() at {datetime.now()}")
     global channel
-    await update_active_machines()
-    await update_machines_activity()
-    # load dict from file
-    with open("dict.json", "r") as f:
-        dict = json.load(f)
+
+    update_active_machines_non_blocking = asyncio.to_thread(update_active_machines)
+    await update_active_machines_non_blocking
+    update_machines_activity_non_blocking = asyncio.to_thread(update_machines_activity)
+    await update_machines_activity_non_blocking
+
+    dict = load_from_json("dict.json")
     machine_list = get_active_machines()
-    # iterate over active machines
     for m in machine_list:
         print(f"[*] checking machine activity {m[0]}")
-        filename = "machines_activity_" + m[0] + ".json"
         m_id = m[0]
         m_name = m[1]
         m_difficulty = m[2]
-        with open(filename) as f:
-            machine = json.load(f)
-            # iterate over each machine's activities
-            for a in machine["activity"]:
-                type = a["type"]
-                htb_id = str(a["user_id"])
-                u_name = a["user_name"]
-                # if local user got flag
-                if type == "root" or type == "user":
-                    for user in dict:
-                        # if user flagged
-                        if htb_id == dict[user]["htb_id"]:
-                            print(f"htb_id {htb_id} flagged {type} machine {m_id}")
-                            # if flag has not been accounted for
-                            if m_id not in dict[user]["f_" + type]:
-                                print("flag not accounted for")
-                                # update dict
-                                dict[user]["f_" + type].append(m_id)
-                                # send alert
-                                embed = create_embed(username=u_name,
-                                                     machine_name=m_name,
-                                                     difficulty=m_difficulty,
-                                                     type=type,
-                                                     img_url=dict[user]["avatar_url"])
-                                await channel.send(embed=embed)
-    # update dict
-    with open("dict.json", "w") as f:
-        json.dump(dict, f)
+        machine = load_from_json("machines_activity_" + m[0] + ".json")
+        for activity in machine["activity"]:
+            type = activity["type"]
+            htb_id = str(activity["user_id"])
+            u_name = activity["user_name"]
+            if type == "root" or type == "user":
+                for user in dict:
+                    # if user flagged
+                    if htb_id == dict[user]["htb_id"]:
+                        print(f"htb_id {htb_id} flagged {type} machine {m_id}")
+                        # if flag has not been accounted for
+                        if m_id not in dict[user]["f_" + type]:
+                            print("flag not accounted for")
+                            # update dict
+                            dict[user]["f_" + type].append(m_id)
+                            embed = create_embed(username=u_name,
+                                                 machine_name=m_name,
+                                                 difficulty=m_difficulty,
+                                                 type=type,
+                                                 img_url=dict[user]["avatar_url"])
+                            await channel.send(embed=embed)
+
+    write_to_json("dict.json", dict)
 
 
 # !manual_flag 1239115 DeVr0S Photobomb 500 user Easy
@@ -150,12 +136,9 @@ async def bind(ctx,
                machine_id: str,
                type: str,
                m_difficulty: str):
-    global dict
     global channel
-    # load dict from file
-    with open("dict.json", "r") as f:
-        dict = json.load(f)
 
+    dict = load_from_json("dict.json")
     for user in dict:
         if dict[user]["htb_id"] == htb_id:
             # update dict
@@ -168,9 +151,8 @@ async def bind(ctx,
                                  img_url=dict[user]["avatar_url"])
             await channel.send(embed=embed)
             break
-    # update dict
-    with open("dict.json", "w") as f:
-        json.dump(dict, f)
+
+    write_to_json("dict.json", dict)
 
 
 bot.run(TOKEN)
