@@ -82,12 +82,12 @@ async def init(ctx):
         await channel.send("I cannot be initialized more than once")
 
 
-@tasks.loop(minutes=10)
+@tasks.loop(minutes=12)
 async def check_for_new_flags():
     print(f"check_for_new_flags() at {datetime.now()}")
     global channel
     await asyncio.to_thread(update_active, machines=True, challenges=True)
-    await asyncio.to_thread(update_activity, machines=True, challenges=True)
+    # await asyncio.to_thread(update_activity, machines=True, challenges=True)
     dict = load_from_json("dict.json")
     actives = get_active(machines=True, challenges=True)
     for active in actives:
@@ -95,7 +95,13 @@ async def check_for_new_flags():
         a_type = active["type"]
         print(f"[*] checking {a_type} activity {a_id}")
         activities = load_from_json(f"{a_type}/{a_id}.json") if a_type in ["machine", "challenge"] else None
-        for flag in activities["info"]["activity"]:
+        # Sometimes the api returns "Too many requests"
+        try:
+            flags = activities["info"]["activity"]
+        except KeyError as e:
+            print(f"KeyError {e}")
+            continue
+        for flag in flags:
             f_htb_id = str(flag["user_id"])
             f_type = flag["type"]
             for user in dict:
