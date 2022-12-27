@@ -4,7 +4,7 @@ A Discord bot that sends messages when members flag a box or a challenge (active
 
 ## Usage
 
-First thing to do when setting up the bot is to initialize it on the designated channel with ``!init``.
+First thing to do when setting up the bot is to initialize it on the designated channel with ``!init``. By default, the channel's name must be ``pwned``.
 
 Users can bind their HTB id with ``!bind <id>`` and unbind with ``!purge``. 
 
