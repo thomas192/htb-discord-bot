@@ -87,7 +87,7 @@ async def check_for_new_flags():
     print(f"check_for_new_flags() at {datetime.now()}")
     global channel
     await asyncio.to_thread(update_active, machines=True, challenges=True)
-    # await asyncio.to_thread(update_activity, machines=True, challenges=True)
+    await asyncio.to_thread(update_activity, machines=True, challenges=True)
     dict = load_from_json("dict.json")
     actives = get_active(machines=True, challenges=True)
     for active in actives:
