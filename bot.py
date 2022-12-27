@@ -58,11 +58,11 @@ async def bind(ctx, htb_id: str):
 async def purge(ctx):
     discord_id = str(ctx.author.id)
     dict = load_from_json("dict.json")
-    if discord_id in dict:  # if id is already set
+    if discord_id in dict:
         purged_id = dict[discord_id]["htb_id"]
-        dict.pop(discord_id)  # remove entry
+        dict.pop(discord_id)
         await ctx.send(f"Your discord id is no longer bound to HTB id {purged_id}")
-    else:  # if id is not set
+    else:
         await ctx.send("Your discord id is not bound to any HTB id")
         return
 
